@@ -1,16 +1,52 @@
+locals {
+  naming_prefix = "${var.application_name}-${random_string.this.result}"
+  azs = slice(data.aws_availability_zones.available.names, 0, 2)
+}
+
 resource "random_string" "this" {
   length  = 6
   special = false
   upper   = false
 }
 
-locals {
-  naming_prefix = "${var.application_name}-${random_string.this.result}"
-}
-
 ###########
 # AWS VPC #
 ###########
+
+data "aws_availability_zones" "available" {}
+
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "5.8.1"
+
+  name = "${local.naming_prefix}-vpc"
+  cidr = "10.0.0.0/16"
+
+  azs             = local.azs
+  public_subnets  = ["10.0.0.0/20", "10.0.16.0/20"]
+  private_subnets = ["10.0.144.0/20", "10.0.128.0/20"]
+
+  #   enable_nat_gateway = true
+  #   one_nat_gateway_per_az = false
+}
+
+resource "aws_eip" "this" {
+  domain     = "vpc"
+  depends_on = [module.vpc]
+}
+
+resource "aws_nat_gateway" "this" {
+  depends_on    = [module.vpc]
+  allocation_id = aws_eip.this.id
+  subnet_id     = element(module.vpc.public_subnets, 0)
+}
+
+resource "aws_route" "this" {
+  for_each               = toset(module.vpc.private_route_table_ids)
+  route_table_id         = each.value
+  destination_cidr_block = "0.0.0.0/0"
+  nat_gateway_id         = aws_nat_gateway.this.id
+}
 
 resource "aws_security_group" "ecs_sg" {
   name        = "${local.naming_prefix}-sg"
