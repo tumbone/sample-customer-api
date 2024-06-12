@@ -20,11 +20,11 @@ variable "container_image_uri" {
 }
 variable "container_port" {
   type    = number
-  default = 3000
+  default = 80
 }
 variable "host_port" {
   type    = number
-  default = 3000
+  default = 80
 }
 variable "container_command" {
   type = list(string)

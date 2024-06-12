@@ -1,6 +1,6 @@
 locals {
   naming_prefix = "${var.application_name}-${random_string.this.result}"
-  azs = slice(data.aws_availability_zones.available.names, 0, 2)
+  azs           = slice(data.aws_availability_zones.available.names, 0, 2)
 }
 
 resource "random_string" "this" {
@@ -51,7 +51,7 @@ resource "aws_route" "this" {
 resource "aws_security_group" "ecs_sg" {
   name        = "${local.naming_prefix}-sg"
   description = "Security Group for ECS"
-  vpc_id      = "vpc-0cd43b3f77c7d9126"
+  vpc_id      = module.vpc.vpc_id
   lifecycle {
     create_before_destroy = true
   }
@@ -71,7 +71,7 @@ resource "aws_security_group_rule" "ecs_sg_inbound_rule" {
   cidr_blocks       = ["0.0.0.0/0"]
   description       = "Allow tcp inbound"
   from_port         = var.host_port
-  protocol          = -1
+  protocol          = "tcp"
   security_group_id = aws_security_group.ecs_sg.id
   to_port           = var.host_port
   type              = "ingress"
@@ -173,14 +173,14 @@ resource "aws_ecs_service" "this" {
   desired_count   = 1
   depends_on      = [aws_iam_role.ecs_execution_role]
 
-  # load_balancer {
-  #   target_group_arn = aws_lb_target_group.this.arn
-  #   container_name   = local.naming_prefix
-  #   container_port   = var.container_port
-  # }
+  load_balancer {
+    target_group_arn = aws_alb_target_group.this.arn
+    container_name   = local.naming_prefix
+    container_port   = var.container_port
+  }
 
   network_configuration {
-    subnets          = ["subnet-0b48a9de2e556576a", "subnet-081c0813a049c90ad"]
+    subnets          = module.vpc.private_subnets
     security_groups  = [aws_security_group.ecs_sg.id]
     assign_public_ip = false
   }
@@ -195,3 +195,38 @@ resource "aws_ecs_service" "this" {
 ##########################
 # Elastic Load Balancer #
 ##########################
+
+resource "aws_alb" "this" {
+  name         = "${local.naming_prefix}-alb"
+  internal     = false
+  idle_timeout = "300"
+  security_groups = [
+    aws_security_group.ecs_sg.id
+  ]
+  subnets                    = module.vpc.public_subnets
+  enable_deletion_protection = false
+
+}
+
+resource "aws_alb_listener" "this" {
+  depends_on = [
+    aws_alb_target_group.this
+  ]
+  load_balancer_arn = aws_alb.this.arn
+  port              = var.host_port
+  protocol          = "HTTP"
+
+  default_action {
+    order            = 1
+    target_group_arn = aws_alb_target_group.this.arn
+    type             = "forward"
+  }
+}
+
+resource "aws_alb_target_group" "this" {
+  target_type = "ip"
+  name        = "${local.naming_prefix}-tg"
+  port        = var.host_port
+  protocol    = "HTTP"
+  vpc_id      = module.vpc.vpc_id
+}
