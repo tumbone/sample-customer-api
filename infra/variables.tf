@@ -4,9 +4,8 @@ variable "region" {
 }
 
 variable "application_name" {
-  type = string
-  #   default = "sample-api"
-  default = "tum-tf-test"
+  type    = string
+  default = "sample-api"
 }
 
 variable "vpc_cidr" {
@@ -35,6 +34,6 @@ variable "container_entry_point" {
   default = []
 }
 variable "inbound_port" {
-  type = number
+  type    = number
   default = 80
 }
