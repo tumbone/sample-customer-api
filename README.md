@@ -1,4 +1,4 @@
-### Deploy a sample API in an AWS ECS Cluster (Terraform)
+### Deploy a sample API to AWS ECS (Terraform)
 
 #### Deploy the solution using Terraform
 ```
