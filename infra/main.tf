@@ -70,10 +70,19 @@ resource "aws_security_group_rule" "ecs_sg_outbound_rule" {
 resource "aws_security_group_rule" "ecs_sg_inbound_rule" {
   cidr_blocks       = ["0.0.0.0/0"]
   description       = "Allow tcp inbound"
-  from_port         = var.host_port
+  from_port         = var.inbound_port
   protocol          = "tcp"
   security_group_id = aws_security_group.ecs_sg.id
-  to_port           = var.host_port
+  to_port           = var.inbound_port
+  type              = "ingress"
+}
+resource "aws_security_group_rule" "ecs_sg_elb_inbound_rule" {
+  cidr_blocks       = [module.vpc.vpc_cidr_block]
+  description       = "Allow ELB"
+  from_port         = 1024
+  protocol          = "tcp"
+  security_group_id = aws_security_group.ecs_sg.id
+  to_port           = 65535
   type              = "ingress"
 }
 
@@ -213,7 +222,7 @@ resource "aws_alb_listener" "this" {
     aws_alb_target_group.this
   ]
   load_balancer_arn = aws_alb.this.arn
-  port              = var.host_port
+  port              = var.inbound_port
   protocol          = "HTTP"
 
   default_action {

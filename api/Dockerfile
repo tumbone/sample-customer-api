@@ -1,4 +1,4 @@
-FROM python:3.11-alpine
+FROM --platform=linux/amd64 python:3.11-alpine as build
 RUN apk update
 RUN apk add py-pip
 RUN apk add --no-cache python3-dev 
