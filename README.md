@@ -10,6 +10,6 @@ The step above will output the dns name of the AWS Application Load Balancer tha
 
 #### API routes
 - /v1/devops/customers GET
-- /v1/devops/customers?id=<id> GET
+- /v1/devops/customers?id=`<id>` GET
 - /v1/devops/customers POST
 - /v1/devops/customers/<id> DELETE
