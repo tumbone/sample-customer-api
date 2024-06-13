@@ -1,1 +1,15 @@
 ### Deploy a sample API in an AWS ECS Cluster (Terraform)
+
+#### Deploy the solution using Terraform
+```
+cd ./infra
+terraform init
+terraform apply
+```
+The step above will output the dns name of the AWS Application Load Balancer that can be used to access the api
+
+#### API routes
+- /v1/devops/customers GET
+- /v1/devops/customers?id=<id> GET
+- /v1/devops/customers POST
+- /v1/devops/customers/<id> DELETE
