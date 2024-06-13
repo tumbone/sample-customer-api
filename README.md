@@ -6,7 +6,7 @@ cd ./infra
 terraform init
 terraform apply
 ```
-The step above will output the dns name of the AWS Application Load Balancer that can be used to access the api
+The step above will output the dns name of the AWS Application Load Balancer that can be used to invoke the api.
 
 #### API routes
 - /v1/devops/customers GET
